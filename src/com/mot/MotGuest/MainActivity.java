@@ -2,10 +2,15 @@ package com.mot.MotGuest;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.drawable.AnimationDrawable;
+import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -13,55 +18,64 @@ public class MainActivity extends Activity {
     /**
      * Called when the activity is first created.
      */
+
+    private AnimationDrawable animationDrawable;
+    private ImageView animationIV;
+    private Thread t;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        animationIV = (ImageView) findViewById(R.id.animationIV);
 
-    }
-    public void BtnOnClick(View view){
-        PasswordMgr passwordMgr=new PasswordMgr();
+        animationIV.setImageResource(R.drawable.animation1);
+        animationDrawable = (AnimationDrawable) animationIV.getDrawable();
+
+
         WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        WifiMgr wifiMgr=new WifiMgr(wifi);
-        String motSSID="M-Guest";
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        Context content =getApplicationContext();
+        WifiMgr wifiMgr=new WifiMgr(wifi,connectivityManager,content);
 
-        TextView textView =(TextView) findViewById(R.id.textView);
-        textView.setText("Scaning");
-
-        List<String> allSSIDs=wifiMgr.getAllAvailableSSID();
-        boolean motoSSIDExist=allSSIDs.contains(motSSID);
-
-        if(!motoSSIDExist){
-            textView.setText("Can't find "+motSSID);
-            return;
-        }
-
-        Integer index = passwordMgr.getPossbleIndex();
-        HashMap<Integer, String> alllPass=passwordMgr.getAllWifiPas();
-
-        for(int i=index;i<=alllPass.size();i++){
-            String password = alllPass.get(i);
-            if(wifiMgr.tryPassword(motSSID,password))
+        try {
+            if(!wifiMgr.motSSIDExist())
             {
-                textView.setText("Password is "+password);
-                return;
+                Toast toast=Toast.makeText(getApplicationContext(), "Can't find M-Guest", Toast.LENGTH_SHORT);
+                toast.show();
             }
+            else{
+                animationDrawable.start();
+                t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if(wifiMgr.tryPassword()) {
+                                animationDrawable.stop();
+
+                                Thread.sleep(2000);
+                                System.exit(0);
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
-        for(int i=index;i>0;i--){
-            String password = alllPass.get(i);
-            if(wifiMgr.tryPassword(motSSID,password))
-            {
-                textView.setText("Password is "+password);
-                return;
-            }
-        }
 
-        textView.setText("Fail");
+
     }
 
-
-
+    @Override
+    protected void onResume(){
+        super.onResume();
+        //Thread.State s = t.getState();
+        if(t!=null && t.getState()!= Thread.State.RUNNABLE)
+            t.start();
+    }
 
 }
 
