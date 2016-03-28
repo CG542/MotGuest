@@ -53,6 +53,8 @@ public class PasswordMgr {
         result.put(24, "ThisisGuestAccess"+year);
         result.put(25, "GuestWeb4U"+year);
         result.put(26, "Internet4MSI"+year);
+        result.put(27, "Internet4MSI"+(Integer.parseInt(year)-1));
+        result.put(28, "InternetAccess"+(Integer.parseInt(year)+1));
 
         return result;
     }

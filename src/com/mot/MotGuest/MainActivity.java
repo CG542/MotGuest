@@ -26,6 +26,16 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+
+
+
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+
         animationIV = (ImageView) findViewById(R.id.animationIV);
 
         animationIV.setImageResource(R.drawable.animation1);
@@ -35,7 +45,8 @@ public class MainActivity extends Activity {
         WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         Context content =getApplicationContext();
-        WifiMgr wifiMgr=new WifiMgr(wifi,connectivityManager,content);
+        MsgHandler msgHander = new MsgHandler(MainActivity.this);
+        WifiMgr wifiMgr=new WifiMgr(wifi,connectivityManager,content,msgHander);
 
         try {
             if(!wifiMgr.motSSIDExist())
@@ -64,14 +75,6 @@ public class MainActivity extends Activity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-
-
-    }
-
-    @Override
-    protected void onResume(){
-        super.onResume();
         //Thread.State s = t.getState();
         if(t!=null && t.getState()!= Thread.State.RUNNABLE)
             t.start();

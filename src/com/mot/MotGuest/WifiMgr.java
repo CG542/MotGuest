@@ -6,6 +6,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Message;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -20,12 +21,14 @@ public class WifiMgr {
     WifiManager wifiMgr;
     ConnectivityManager connMgr;
     Context context;
+    MsgHandler msgHandler;
     String motSSID="M-Guest";
-    public WifiMgr(WifiManager mgr, ConnectivityManager connMgr,Context context)
+    public WifiMgr(WifiManager mgr, ConnectivityManager connMgr,Context context,MsgHandler msgHandler)
     {
         this.wifiMgr =mgr;
         this.connMgr =connMgr;
         this.context=context;
+        this.msgHandler=msgHandler;
     }
 
     public boolean motSSIDExist() throws InterruptedException {
@@ -46,6 +49,9 @@ public class WifiMgr {
         HashMap<Integer, String> alllPass=passwordMgr.getAllWifiPas();
 
         for(int i=index;i<=alllPass.size();i++){
+            Message msg = msgHandler.obtainMessage();
+            msg.arg1 = i;
+            msgHandler.sendMessage(msg);
             String password = alllPass.get(i);
             if(setWifiPass(motSSID,password))
             {
@@ -54,6 +60,9 @@ public class WifiMgr {
         }
 
         for(int i=index;i>0;i--){
+            Message msg = msgHandler.obtainMessage();
+            msg.arg1 = i;
+            msgHandler.sendMessage(msg);
             String password = alllPass.get(i);
             if(setWifiPass(motSSID,password))
             {
@@ -70,8 +79,15 @@ public class WifiMgr {
         if (!wifiMgr.isWifiEnabled()) {
             wifiMgr.setWifiEnabled(true);
         }
+        for(int i=0;i<30;i++) {
+           if(!wifiMgr.isWifiEnabled()){
+                Thread.sleep(500);
+            }
+            else{
+               break;
+           }
 
-        Thread.sleep(500);
+        }
 
         if(wifiMgr.isWifiEnabled()) {
             List<ScanResult> result = wifiMgr.getScanResults();
@@ -84,20 +100,18 @@ public class WifiMgr {
     }
 
     private Boolean setWifiPass(String ssid, String password) throws InterruptedException {
-//        Toast toast=Toast.makeText(context, "Try "+password, Toast.LENGTH_SHORT);
-//        toast.show();
 
         WifiConfiguration config = new WifiConfiguration();
 
-        config.SSID =  "\"" + ssid + "\"";
+        config.SSID = "\"" + ssid + "\"";
         config.preSharedKey = "\"" + password + "\"";
         config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
         wifiMgr.addNetwork(config);
 
 
         List<WifiConfiguration> list = wifiMgr.getConfiguredNetworks();
-        for( WifiConfiguration i : list ) {
-            if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
+        for (WifiConfiguration i : list) {
+            if (i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
                 wifiMgr.disconnect();
                 wifiMgr.enableNetwork(i.networkId, true);
                 wifiMgr.reconnect();
@@ -105,14 +119,17 @@ public class WifiMgr {
             }
         }
 
+        return WifiIsConnected();
+    }
 
+    private Boolean WifiIsConnected() throws InterruptedException {
         boolean result = false;
-        for(int i=0;i<10;i++){
+        for(int i=0;i<20;i++){
             NetworkInfo wifiNetworkInfo = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
             NetworkInfo.DetailedState state =wifiNetworkInfo.getDetailedState();
             if(state!= NetworkInfo.DetailedState.CONNECTED)
             {
-                Thread.sleep(1000);
+                Thread.sleep(500);
             }
             result= wifiNetworkInfo.isConnected();
             if(result)
@@ -120,6 +137,5 @@ public class WifiMgr {
         }
 
         return result;
-
     }
 }
