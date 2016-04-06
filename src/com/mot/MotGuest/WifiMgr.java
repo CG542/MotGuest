@@ -9,6 +9,7 @@ import android.net.wifi.WifiManager;
 import android.os.Message;
 import android.widget.Toast;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,10 +24,10 @@ public class WifiMgr {
     Context context;
     MsgHandler msgHandler;
     String motSSID="M-Guest";
-    public WifiMgr(WifiManager mgr, ConnectivityManager connMgr,Context context,MsgHandler msgHandler)
+    public WifiMgr(Context context,MsgHandler msgHandler)
     {
-        this.wifiMgr =mgr;
-        this.connMgr =connMgr;
+        this.wifiMgr =(WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+        this.connMgr =(ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);;
         this.context=context;
         this.msgHandler=msgHandler;
     }
@@ -42,17 +43,23 @@ public class WifiMgr {
         return true;
     }
 
-    public boolean tryPassword() throws InterruptedException {
-        PasswordMgr passwordMgr=new PasswordMgr();
+    public boolean tryPassword() throws InterruptedException, UnsupportedEncodingException {
+        PasswordMgr passwordMgr=PasswordMgr.getInstance();
+
+        String passwordFromWeb=passwordMgr.getPasswordFromWeb();
+        if(setWifiPass(motSSID,passwordFromWeb))
+        {
+            return true;
+        }
 
         Integer index = passwordMgr.getPossbleIndex();
-        HashMap<Integer, String> alllPass=passwordMgr.getAllWifiPas();
+        HashMap<Integer, String> allPass=passwordMgr.getAllWifiPas();
 
-        for(int i=index;i<=alllPass.size();i++){
+        for(int i=index;i<=allPass.size();i++){
             Message msg = msgHandler.obtainMessage();
             msg.arg1 = i;
             msgHandler.sendMessage(msg);
-            String password = alllPass.get(i);
+            String password = allPass.get(i);
             if(setWifiPass(motSSID,password))
             {
                 return true;
@@ -63,7 +70,7 @@ public class WifiMgr {
             Message msg = msgHandler.obtainMessage();
             msg.arg1 = i;
             msgHandler.sendMessage(msg);
-            String password = alllPass.get(i);
+            String password = allPass.get(i);
             if(setWifiPass(motSSID,password))
             {
                 return true;
@@ -101,6 +108,9 @@ public class WifiMgr {
 
     private Boolean setWifiPass(String ssid, String password) throws InterruptedException {
 
+        if(password.isEmpty()){
+            return false;
+        }
         WifiConfiguration config = new WifiConfiguration();
 
         config.SSID = "\"" + ssid + "\"";

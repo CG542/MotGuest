@@ -1,5 +1,9 @@
 package com.mot.MotGuest;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -8,6 +12,26 @@ import java.util.HashMap;
  * Created by bkmr38 on 3/23/2016.
  */
 public class PasswordMgr {
+
+    Context con;
+    private PasswordMgr(Context con){
+        this.con=con;
+    }
+
+    private static PasswordMgr instance;
+
+    public static PasswordMgr getInstance(){
+        return instance;
+    }
+
+    public static void CreateInstance(Context con){
+        if(instance==null){
+            instance=new PasswordMgr(con);
+        }
+
+    }
+
+
     public Integer getPossbleIndex() {
         SimpleDateFormat fomat = new SimpleDateFormat("MM");
         Integer month = Integer.valueOf(fomat.format(new Date()));
@@ -20,6 +44,34 @@ public class PasswordMgr {
         }
         result--;
         return result;
+    }
+
+
+    public void storePasswordFromWeb(String psw){
+        if(!psw.isEmpty()) {
+            SharedPreferences sp = con.getSharedPreferences("My_PSW", Context.MODE_PRIVATE);
+
+            SharedPreferences.Editor ediotr = sp.edit();
+            ediotr.putString("PSW", psw);
+            ediotr.commit();
+        }
+    }
+
+    public String getPasswordFromWeb() throws UnsupportedEncodingException {
+        SharedPreferences sp =con.getSharedPreferences("My_PSW",Context.MODE_PRIVATE);
+        String result= sp.getString("PSW","");
+        if(!result.isEmpty())
+        {
+            return DeEncryString(result);
+        }
+        return "";
+    }
+    private static String DeEncryString(String s) throws UnsupportedEncodingException {
+        byte[] data= s.getBytes("ASCII");
+        for (int i=0;i<data.length;i++) {
+            data[i]=(byte)(data[i]-1);
+        }
+        return new String(data);
     }
 
     public HashMap<Integer, String> getAllWifiPas() {

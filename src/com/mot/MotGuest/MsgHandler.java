@@ -18,7 +18,7 @@ public class MsgHandler extends Handler {
     @Override
     public void handleMessage(Message msg) {
         int index =msg.arg1;
-        PasswordMgr mgr = new PasswordMgr();
+        PasswordMgr mgr = PasswordMgr.getInstance();
         String password = mgr.getAllWifiPas().get(index);
         showInfo("Try the Password: "+password);
         super.handleMessage(msg);
