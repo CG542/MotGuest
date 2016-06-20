@@ -46,11 +46,11 @@ public class WifiMgr {
     public boolean tryPassword() throws InterruptedException, UnsupportedEncodingException {
         PasswordMgr passwordMgr=PasswordMgr.getInstance();
 
-        String passwordFromWeb=passwordMgr.getPasswordFromWeb();
-        if(setWifiPass(motSSID,passwordFromWeb))
-        {
-            return true;
-        }
+//        String passwordFromWeb=passwordMgr.getPasswordFromWeb();
+//        if(setWifiPass(motSSID,passwordFromWeb))
+//        {
+//            return true;
+//        }
 
         Integer index = passwordMgr.getPossbleIndex();
         HashMap<Integer, String> allPass=passwordMgr.getAllWifiPas();
